@@ -7,7 +7,7 @@ def get_out_of_stock(config):
     token = get_token(config)
 
     if not token:
-        print("No valid found. Exit...")
+        print("No valid token found. Exit...")
         exit()
 
     url = config['api_root_url'] + config['out_of_stock']['endpoint']
@@ -39,7 +39,7 @@ def get_out_of_stock(config):
 
                 print(f'Results for out of stock products for {date} were successfully retrieved and saved to {file_path}')
             except Exception as e:
-                print(f"Error during saving results. {str(e)}")
+                print(f"Error happened during saving results. {str(e)}")
 
 
 def get_token(config):
