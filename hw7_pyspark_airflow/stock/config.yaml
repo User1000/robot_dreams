@@ -1,0 +1,11 @@
+api_root_url: https://robot-dreams-de-api.herokuapp.com
+
+auth:
+  endpoint: /auth
+  username: rd_dreams
+  password: djT6LasE
+
+out_of_stock:
+  endpoint: /out_of_stock
+
+storage_dir: /home/user/out_of_stock
