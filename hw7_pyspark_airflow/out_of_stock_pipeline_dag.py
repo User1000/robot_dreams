@@ -4,7 +4,7 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 
-from stock.stock_data import get_out_of_stock_and_save_to_hadoop
+from stock.stock_data import get_out_of_stock_and_save_to_bronze
 
 config_path = "/home/user/airflow/dags/stock/config.yaml"
 tasks = []
