@@ -1,0 +1,21 @@
+dshop:
+  tables:
+    - aisles
+    - clients
+    - departments
+    - orders
+    - products
+
+out_of_stock:
+  api_root_url: https://robot-dreams-de-api.herokuapp.com
+
+  auth:
+    endpoint: /auth
+    username: rd_dreams
+    password: djT6LasE
+
+  endpoint: /out_of_stock
+
+hdfs:
+  bronze_root_dir: /home/user/out_of_stock
+  silver_root_dir: /home/user/out_of_stock
