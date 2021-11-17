@@ -11,8 +11,8 @@ import dshop.functions as dshop_func
 import out_of_stock.functions as out_of_stock_func
 import data_process.functions as data_process_func
 
-config_path = "/home/user/airflow/dags/stock/config.yaml"
-config_path = r"C:\Users\Oleksandr\Documents\STUDY\robot_dreams\Homework\hw8_final_project\config.yaml"
+config_path = "/home/user/airflow/dags/config.yaml"
+# config_path = r"C:\Users\Oleksandr\Documents\STUDY\robot_dreams\Homework\hw8_final_project\config.yaml"
 
 default_args = {
     "owner": "airflow",
@@ -27,34 +27,6 @@ except Exception as e:
     raise
 
 
-def load_dshop_to_bronze_group(table):
-    return PythonOperator(
-        task_id="load_"+table+"_to_bronze",
-        python_callable=dshop_func.extract_tables_to_bronze,
-        op_kwargs={"table": table, "bronze_root_dir": pipeline_config["hdfs"]["bronze_root_dir"]}
-    )
-
-
-load_out_of_stock_to_bronze = PythonOperator(
-    task_id="out_of_stock_to_bronze",
-    python_callable=out_of_stock_func.get_out_of_stock_and_save_to_bronze,
-    op_kwargs={"out_of_stock_config": pipeline_config["out_of_stock"]}
-)
-
-load_data_to_silver = PythonOperator(
-    task_id="load_data_to_silver",
-    python_callable=data_process_func.load_data_to_silver,
-    op_kwargs={ "bronze_root_dir": pipeline_config["hdfs"]["bronze_root_dir"],
-                "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"]}
-)
-
-load_data_to_dwh =  PythonOperator(
-    task_id="load_data_to_dwh",
-    python_callable=data_process_func.load_data_to_dwh,
-    op_kwargs={ "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"] }
-)
-
-
 dag = DAG(
     dag_id="dshop_etl_pipline",
     description="dshop ETL pipline",
@@ -63,14 +35,49 @@ dag = DAG(
     default_args=default_args
 )
 
+
+def load_dshop_to_bronze_group(table):
+    return PythonOperator(
+        dag=dag,
+        task_id="load_"+table+"_to_bronze",
+        python_callable=dshop_func.extract_tables_to_bronze,
+        op_kwargs={"table": table, "bronze_root_dir": pipeline_config["hdfs"]["bronze_root_dir"]},
+    )
+
+
+load_out_of_stock_to_bronze = PythonOperator(
+    dag=dag,
+    task_id="load_out_of_stock_to_bronze",
+    python_callable=out_of_stock_func.get_out_of_stock_and_save_to_bronze,
+    op_kwargs={"out_of_stock_config": pipeline_config["out_of_stock"],
+               "bronze_root_dir": pipeline_config["hdfs"]["bronze_root_dir"]}
+)
+
+load_data_to_silver = PythonOperator(
+    dag=dag,
+    task_id="load_data_to_silver",
+    python_callable=data_process_func.load_data_to_silver,
+    op_kwargs={ "bronze_root_dir": pipeline_config["hdfs"]["bronze_root_dir"],
+                "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"]}
+)
+
+load_data_to_dwh =  PythonOperator(
+    dag=dag,
+    task_id="load_data_to_dwh",
+    python_callable=data_process_func.load_data_to_dwh,
+    op_kwargs={ "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"] }
+)
+
 pipeline_start = DummyOperator(
     task_id='start_pipeline',
     dag=dag
 )
+
 pipeline_finish = DummyOperator(
     task_id='finish_pipeline',
     dag=dag
 )
+
 
 for table in pipeline_config['dshop']['tables']:
     pipeline_start >> load_dshop_to_bronze_group(table) >> load_data_to_silver
