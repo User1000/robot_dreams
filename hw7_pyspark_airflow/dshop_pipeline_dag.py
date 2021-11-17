@@ -6,7 +6,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 from datetime import datetime
 
-from dshop.functions import load_to_bronze
+from dshop.functions import load_to_bronze, load_to_silver
 
 
 default_args = {
@@ -22,14 +22,14 @@ def return_tables():
 def load_to_bronze_group(value):
     return PythonOperator(
         task_id="load_"+value+"_to_bronze",
-        python_callable=load_to_bronze_spark,
+        python_callable=load_to_bronze,
         op_kwargs={"table": value}
     )
 
 def load_to_silver(value):
     return PythonOperator(
         task_id="load_"+value+"_to_silver",
-        python_callable=load_to_bronze_spark,
+        python_callable=load_to_silver,
         op_kwargs={"table": value}
     )
 
