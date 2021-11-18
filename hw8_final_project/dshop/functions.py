@@ -21,32 +21,15 @@ def extract_tables_to_bronze(table, bronze_root_dir, **kwargs):
         'port': pg_conn.port,
         'user': pg_conn.login,
         'password': pg_conn.password,
-        'database': 'postgres'
+        'database': pg_conn.schema
     }
 
     logging.info(f"Writing table {table} from {pg_conn.host} to Bronze")
+    
     client = InsecureClient(f"http://{hdfs_conn.host}:{hdfs_conn.port}", user=hdfs_conn.login)
     with psycopg2.connect(**pg_creds) as pg_connection:
         cursor = pg_connection.cursor()
-        with client.write(os.path.join(bronze_root_dir, 'dshop', execution_date.strftime("%Y-%m-%d"), table)) as csv_file:
+        with client.write(os.path.join(bronze_root_dir, execution_date.strftime("%Y-%m-%d"), table), overwrite=True) as csv_file:
             cursor.copy_expert(f"COPY {table} TO STDOUT WITH HEADER CSV", csv_file)
+    
     logging.info(f"Table {table} successfully loaded to bronze")
-
-
-# def transform_tables_to_silver(table):
-#     logging.info(f"Writing table {table} from {pg_conn.host} to Silver")
-    
-#     spark = SparkSession.builder\
-#             .master('local')\
-#             .appName('load_to_silver')\
-#             .getOrCreate()
-
-#     dshop_dfs = {}
-#     df = spark.read\
-#             .option(header, True)\
-#             .option('inferSchema', True)\
-#             .csv(os.path.join('/', 'bronze', 'dshop', table))
-    
-#     df.distinct()\
-#         .write.parquet(os.path.join('/', 'silver', 'dshop', table))
-#     logging.info("Successfully moved to silver")

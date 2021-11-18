@@ -3,6 +3,7 @@ import yaml
 import logging
 
 from airflow import DAG
+from airflow.operators.postgres_operator import PostgresOperator, PostgresHook
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 from datetime import datetime
@@ -30,8 +31,10 @@ except Exception as e:
 dag = DAG(
     dag_id="dshop_etl_pipline",
     description="dshop ETL pipline",
-    schedule_interval="@daily",
-    start_date=datetime(2021, 8, 2),
+    # schedule_interval="@daily",
+    # start_date=datetime(2025, 8, 2),
+        schedule_interval=None,
+        start_date=datetime(2021, 11, 16),
     default_args=default_args
 )
 
@@ -42,15 +45,16 @@ def load_dshop_to_bronze_group(table):
         task_id="load_"+table+"_to_bronze",
         python_callable=dshop_func.extract_tables_to_bronze,
         op_kwargs={"table": table, "bronze_root_dir": pipeline_config["hdfs"]["bronze_root_dir"]},
+        provide_context=True
     )
-
 
 load_out_of_stock_to_bronze = PythonOperator(
     dag=dag,
     task_id="load_out_of_stock_to_bronze",
     python_callable=out_of_stock_func.get_out_of_stock_and_save_to_bronze,
     op_kwargs={"out_of_stock_config": pipeline_config["out_of_stock"],
-               "bronze_root_dir": pipeline_config["hdfs"]["bronze_root_dir"]}
+               "bronze_root_dir": pipeline_config["hdfs"]["bronze_root_dir"]},
+    provide_context=True
 )
 
 load_data_to_silver = PythonOperator(
@@ -58,14 +62,16 @@ load_data_to_silver = PythonOperator(
     task_id="load_data_to_silver",
     python_callable=data_process_func.load_data_to_silver,
     op_kwargs={ "bronze_root_dir": pipeline_config["hdfs"]["bronze_root_dir"],
-                "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"]}
+                "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"]},
+    provide_context=True
 )
 
 load_data_to_dwh =  PythonOperator(
     dag=dag,
     task_id="load_data_to_dwh",
     python_callable=data_process_func.load_data_to_dwh,
-    op_kwargs={ "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"] }
+    op_kwargs={ "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"] },
+    provide_context=True
 )
 
 pipeline_start = DummyOperator(
