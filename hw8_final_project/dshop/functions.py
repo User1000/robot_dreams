@@ -29,7 +29,7 @@ def extract_tables_to_bronze(table, bronze_root_dir, **kwargs):
     client = InsecureClient(f"http://{hdfs_conn.host}:{hdfs_conn.port}", user=hdfs_conn.login)
     with psycopg2.connect(**pg_creds) as pg_connection:
         cursor = pg_connection.cursor()
-        with client.write(os.path.join(bronze_root_dir, execution_date.strftime("%Y-%m-%d"), table), overwrite=True) as csv_file:
+        with client.write(os.path.join(bronze_root_dir, execution_date.strftime("%Y-%m-%d"), f'{table}.csv'), overwrite=True) as csv_file:
             cursor.copy_expert(f"COPY {table} TO STDOUT WITH HEADER CSV", csv_file)
     
     logging.info(f"Table {table} successfully loaded to bronze")
