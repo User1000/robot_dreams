@@ -39,7 +39,7 @@ def load_data_to_silver(bronze_root_dir, silver_root_dir, **kwargs):
 
     schema = StructType() \
         .add("department_id", IntegerType(), True)\
-        .add("department", IntegerType(), True)
+        .add("department", StringType(), True)
 
     departments_df = spark.read\
         .option('header', True)\
@@ -84,7 +84,6 @@ def load_data_to_silver(bronze_root_dir, silver_root_dir, **kwargs):
     products_cleaned_df = products_df.distinct()
     aisles_cleaned_df = aisles_df.distinct()
     departments_cleaned_df = departments_df.distinct()
-    clients_cleaned_df = clients_df.distinct()
 
     dates_cleaned_df = orders_df.selectExpr('order_date as date')\
         .unionByName(out_of_stock_df.select('date'))\
@@ -118,7 +117,6 @@ def load_data_to_silver(bronze_root_dir, silver_root_dir, **kwargs):
     products_cleaned_df.write.mode('overwrite').parquet(os.path.join(silver_root_dir, execution_date, 'products.parquet'))
     aisles_cleaned_df.write.mode('overwrite').parquet(os.path.join(silver_root_dir, execution_date, 'aisles.parquet'))
     departments_cleaned_df.write.mode('overwrite').parquet(os.path.join(silver_root_dir, execution_date, 'departments.parquet'))
-    clients_cleaned_df.write.mode('overwrite').parquet(os.path.join(silver_root_dir, execution_date, 'clients.parquet'))
     dates_cleaned_df.write.mode('overwrite').parquet(os.path.join(silver_root_dir, execution_date, 'dates.parquet'))
     location_areas_cleaned_df.write.mode('overwrite').parquet(os.path.join(silver_root_dir, execution_date, 'location_areas.parquet'))
     orders_cleaned_df.write.mode('overwrite').parquet(os.path.join(silver_root_dir, execution_date, 'orders.parquet'))
@@ -128,8 +126,8 @@ def load_data_to_silver(bronze_root_dir, silver_root_dir, **kwargs):
     logging.info("Successfully moved dataset to silver")
 
 
-def load_data_to_dwh():
-    logging.info(f"Load dataset to DWH")
+def load_data_to_dwh(silver_root_dir, dwh_connection_id, **kwargs):
+    logging.info(f"Loading dataset to DWH...")
 
     execution_date = kwargs['execution_date']
 
@@ -139,5 +137,29 @@ def load_data_to_dwh():
         .appName("lesson")\
         .getOrCreate()
 
+    gp_conn = BaseHook.get_connection(dwh_connection_id)
+    gp_url = f"jdbc:postgresql://{gp_conn.host}:{gp_conn.port}/{gp_conn.schema}"
+    gp_creds = {"user": gp_conn.login, "password": gp_conn.password}
 
-    logging.info(f"Successfully loaded dataset to DWH")
+    ### Read tables from silver ###
+    clients_df = spark.read.parquet(os.path.join(silver_root_dir, execution_date, 'clients.parquet'))
+    products_df = spark.read.parquet(os.path.join(silver_root_dir, execution_date, 'products.parquet'))
+    aisles_df = spark.read.parquet(os.path.join(silver_root_dir, execution_date, 'aisles.parquet'))
+    departments_df = spark.read.parquet(os.path.join(silver_root_dir, execution_date, 'departments.parquet'))
+    dates_df = spark.read.parquet(os.path.join(silver_root_dir, execution_date, 'dates.parquet'))
+    location_areas_df = spark.read.parquet(os.path.join(silver_root_dir, execution_date, 'location_areas.parquet'))
+    orders_df = spark.read.parquet(os.path.join(silver_root_dir, execution_date, 'orders.parquet'))
+    out_of_stock_df = spark.read.parquet(os.path.join(silver_root_dir, execution_date, 'out_of_stock.parquet'))
+
+
+    ### Write table to DWH ###
+    clients_df.write.mode('append').jdbc(gp_url, table="clients_dim", properties=gp_creds)
+    products_df.write.mode('append').jdbc(gp_url, table="products_dim", properties=gp_creds)
+    aisles_df.write.mode('append').jdbc(gp_url, table="aisles_dim", properties=gp_creds)
+    departments_df.write.mode('append').jdbc(gp_url, table="departments_dim", properties=gp_creds)
+    dates_df.write.mode('append').jdbc(gp_url, table="dates_dim", properties=gp_creds)
+    location_areas_df.write.mode('append').jdbc(gp_url, table="location_areas_dim", properties=gp_creds)
+    orders_df.write.mode('append').jdbc(gp_url, table="orders_fact", properties=gp_creds)
+    out_of_stock_df.write.mode('append').jdbc(gp_url, table="out_of_stock_fact", properties=gp_creds)
+
+    logging.info(f"Successfully loaded dataset to DWH!")

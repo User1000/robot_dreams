@@ -70,7 +70,8 @@ load_data_to_dwh =  PythonOperator(
     dag=dag,
     task_id="load_data_to_dwh",
     python_callable=data_process_func.load_data_to_dwh,
-    op_kwargs={ "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"] },
+    op_kwargs={ "silver_root_dir": pipeline_config["hdfs"]["silver_root_dir"],
+                "dwh_connection_id": pipeline_config["dwh"]["connection_id"] },
     provide_context=True
 )
 

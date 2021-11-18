@@ -24,3 +24,6 @@ out_of_stock:
 hdfs:
   bronze_root_dir: /bronze/dshop
   silver_root_dir: /silver/dshop
+
+dwh:
+  connection_id: greenplum_olap
