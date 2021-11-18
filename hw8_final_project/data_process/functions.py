@@ -1,14 +1,17 @@
 
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
+from pyspark.sql.types import *
 import os
 from datetime import datetime
+import logging
+from airflow.hooks.base_hook import BaseHook
 
 
 def load_data_to_silver(bronze_root_dir, silver_root_dir, **kwargs):
     logging.info(f"Process dataset to Silver")
 
-    execution_date = kwargs['execution_date']
+    execution_date = kwargs['execution_date'].strftime("%Y-%m-%d")
 
     spark = SparkSession.builder\
         .config('spark.driver.extraClassPath', '/mnt/share/postgresql-42.3.1.jar')\
@@ -76,7 +79,7 @@ def load_data_to_silver(bronze_root_dir, silver_root_dir, **kwargs):
         
     out_of_stock_df = spark.read\
         .schema(schema)\
-    .json(os.path.join(bronze_root_dir, execution_date, 'out_of_stock.json'))
+        .json(os.path.join(bronze_root_dir, execution_date, 'out_of_stock.json'))
 
     ### Transform and cleanup dataset ###
 
@@ -129,7 +132,7 @@ def load_data_to_silver(bronze_root_dir, silver_root_dir, **kwargs):
 def load_data_to_dwh(silver_root_dir, dwh_connection_id, **kwargs):
     logging.info(f"Loading dataset to DWH...")
 
-    execution_date = kwargs['execution_date']
+    execution_date = kwargs['execution_date'].strftime("%Y-%m-%d")
 
     spark = SparkSession.builder\
         .config('spark.driver.extraClassPath', '/mnt/share/postgresql-42.3.1.jar')\
