@@ -55,7 +55,7 @@ def load_data_to_silver(bronze_root_dir, silver_root_dir, **kwargs):
             .add("client_id", IntegerType(), True)\
             .add("store_id", IntegerType(), True)\
             .add("quantity", IntegerType(), True)\
-            .add("order_date", DateType(), True)    
+            .add("order_date", DateType(), True)
         
     orders_df = spark.read\
         .option('header', True)\
@@ -156,13 +156,37 @@ def load_data_to_dwh(silver_root_dir, dwh_connection_id, **kwargs):
 
 
     ### Write table to DWH ###
+    logging.info("Loading data to DWH...")
+    logging.info("Writing clients_dim to dwh...")
     clients_df.write.mode('append').jdbc(gp_url, table="clients_dim", properties=gp_creds)
+    logging.info("Done")
+
+    logging.info("Writing products_dim to dwh...")
     products_df.write.mode('append').jdbc(gp_url, table="products_dim", properties=gp_creds)
+    logging.info("Done")
+
+    logging.info("Writing aisles_dim to dwh...")
     aisles_df.write.mode('append').jdbc(gp_url, table="aisles_dim", properties=gp_creds)
+    logging.info("Done")
+    
+    logging.info("Writing departments_dim to dwh...")
     departments_df.write.mode('append').jdbc(gp_url, table="departments_dim", properties=gp_creds)
+    logging.info("Done")
+    
+    logging.info("Writing dates_dim to dwh...")
     dates_df.write.mode('append').jdbc(gp_url, table="dates_dim", properties=gp_creds)
+    logging.info("Done")
+    
+    logging.info("Writing location_areas_dim to dwh...")
     location_areas_df.write.mode('append').jdbc(gp_url, table="location_areas_dim", properties=gp_creds)
+    logging.info("Done")
+    
+    logging.info("Writing orders_fact to dwh...")
     orders_df.write.mode('append').jdbc(gp_url, table="orders_fact", properties=gp_creds)
+    logging.info("Done")
+    
+    logging.info("Writing out_of_stock_fact to dwh...")
     out_of_stock_df.write.mode('append').jdbc(gp_url, table="out_of_stock_fact", properties=gp_creds)
+    logging.info("Done")
 
     logging.info(f"Successfully loaded dataset to DWH!")

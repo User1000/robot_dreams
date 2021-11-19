@@ -29,16 +29,13 @@ create table if not exists departments_dim (
 ) with (appendoptimized=true, orientation=column, compresstype=zlib, compresslevel=5)
 distributed by (department_id);
 
-create table if not exists clients_dim (
-    client_id integer, 
-    fullname varchar(30), 
-    location_area_id integer
-) with (appendoptimized=true, orientation=column, compresstype=zlib, compresslevel=5)
-distributed by (client_id, location_area_id);
-
 create table if not exists dates_dim (
     time_id integer, 
-    action_date date
+    action_date date,
+    action_week int,
+    action_month int,
+    action_year int,
+    action_weekday int
 ) with (appendoptimized=true, orientation=column, compresstype=zlib, compresslevel=5)
 distributed by (time_id);
 
