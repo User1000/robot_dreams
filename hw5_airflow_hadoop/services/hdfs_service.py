@@ -12,6 +12,7 @@ def export_table_from_pg_to_hdfs(table_name, pg_engine):
     connection = pg_engine.connect().connection
     cursor = connection.cursor()
     with hdfs_client.write(f'{bronze_zone_path}/{table_name}.csv') as csv_file:
+        print('Executing:', f'COPY {table_name} TO STDOUT WITH HEADER CSV')
         cursor.copy_expert(f'COPY {table_name} TO STDOUT WITH HEADER CSV', csv_file)
     
     connection.commit()
