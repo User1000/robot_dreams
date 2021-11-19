@@ -30,7 +30,7 @@ create table if not exists departments_dim (
 distributed by (department_id);
 
 create table if not exists dates_dim (
-    time_id integer, 
+    time_id bigint, 
     action_date date,
     action_week int,
     action_month int,
